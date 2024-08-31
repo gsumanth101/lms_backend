@@ -46,7 +46,7 @@ const facultyLogin = async (req, res) => {
             return res.status(401).json({ error: "Invalid username or password" });
         }
 
-        console.log("Faculty found:", facultyEmail); // Log the found faculty
+        console.log("Faculty found:", facultyEmail);
 
         if (!password || !facultyEmail.password) {
             console.log("Password missing:", { password, facultyPassword: facultyEmail.password }); // Log if passwords are missing
@@ -55,7 +55,7 @@ const facultyLogin = async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, facultyEmail.password);
         if (!isMatch) {
-            console.log("Password mismatch"); // Log if passwords do not match
+            console.log("Password mismatch"); 
             return res.status(401).json({ error: "Invalid username or password" });
         }
 

@@ -2,6 +2,7 @@ const express = require("express");
 const dotEnv = require('dotenv');
 const mongoose = require('mongoose');
 const facultyRoutes = require('./routes/facultyRouter');
+const userRoutes = require('./routes/userRouter');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path')
@@ -23,12 +24,13 @@ app.use(cors())
 
 app.use(bodyParser.json());
 app.use('/faculty', facultyRoutes);
+app.use('/user',userRoutes)
 
 
 app.listen(PORT, () => {
     console.log(`server started and running at ${PORT}`);
 });
 
-app.use('/', (req, res) => {
-    res.send("<h1> Welcome to SUBY");
-})
+// app.use('/', (req, res) => {
+//     res.send("<h1> Welcome to SUBY");
+// })
