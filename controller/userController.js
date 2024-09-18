@@ -10,7 +10,7 @@ const db = require('../lib/config');
 
 
 const userRegister = async(req, res) => {
-    const { fname,lname, email,mobile_num, password } = req.body;
+    const { fname,lname, email, password } = req.body;
     try {
         const userEmail = await user.findOne({ email });
         if (userEmail) {
@@ -22,7 +22,6 @@ const userRegister = async(req, res) => {
             fname,
             lname,
             email,
-            mobile_num,
             password: hashedPassword
         });
         await newuser.save();
@@ -59,7 +58,6 @@ const userLogin = async (req, res) => {
             return res.status(401).json({ error: "Invalid username or password" });
         }
 
-        // Generate a token without a secret key (not recommended for production)
         const token = jwt.sign({ userId: userEmail._id }, undefined, { algorithm: 'none' });
 
         const userId = userEmail._id;

@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const userSchema = new mongoose.Schema({
-    fname: {
+// Define the User schema
+const userSchema = new Schema({
+    regd_no: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
-    lname: {
+    name: {
         type: String,
         required: true
     },
@@ -14,21 +17,28 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    mobile_num:{
+    stream: {
+        type: String,
+        required: true
+    },
+    year: {
         type: Number,
-        required:true,
-        unique:true
+        required: true
+    },
+    university: {
+        type: Schema.Types.ObjectId,
+        ref: 'University',
+        required: true
     },
     password: {
         type: String,
         required: true
-    },
-    // firm: [{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Firm'
-    // }]
+    }
+}, {
+    timestamps: true
 });
 
-const user = mongoose.model('user', userSchema);
+// Create the User model
+const User = mongoose.model('user', userSchema);
 
-module.exports = user;
+module.exports = User;

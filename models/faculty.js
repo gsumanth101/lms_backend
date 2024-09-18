@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const facultySchema = new mongoose.Schema({
-    fname: {
-        type: String,
-        required: true
-    },
-    lname: {
+    name: {
         type: String,
         required: true
     },
@@ -13,11 +9,6 @@ const facultySchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true
-    },
-    mobile_num:{
-        type: Number,
-        required:true,
-        unique:true
     },
     password: {
         type: String,
