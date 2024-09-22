@@ -17,12 +17,20 @@ const userSchema = new Schema({
         required: true,
         unique: true
     },
+    section:{
+        type: String,
+        required: true
+    },
     stream: {
         type: String,
         required: true
     },
     year: {
         type: Number,
+        required: true
+    },
+    dept:{
+        type: String,
         required: true
     },
     university: {

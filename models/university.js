@@ -1,12 +1,20 @@
 const mongoose = require('mongoose');
 
 const universitySchema = new mongoose.Schema({
-    name: {
+    long_name: {
+        type: String,
+        required: true
+    },
+    short_name:{
         type: String,
         required: true,
         unique: true
     },
     location: {
+        type: String,
+        required: true
+    },
+    country:{
         type: String,
         required: true
     },

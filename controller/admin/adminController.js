@@ -2,6 +2,7 @@ const admin = require('../../models/admin');
 const University = require('../../models/university');
 const Course = require('../../models/course');
 const User = require('../../models/user'); 
+const Spoc = require('../../models/spoc');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
@@ -113,12 +114,30 @@ const getadminById = async (req, res) => {
 // Create University
 const createUniversity = async (req, res) => {
     try {
-        const { name, location, established } = req.body;
-        const newUniversity = new University({ name, location, established });
+        const { long_name,short_name, location, country} = req.body;
+        const newUniversity = new University({long_name,short_name, location, country});
         await newUniversity.save();
         res.status(201).json({ message: 'University created successfully', university: newUniversity });
     } catch (error) {
         res.status(500).json({ message: 'Error creating university', error });
+    }
+};
+
+const editUniversity = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { long_name, short_name, location, country } = req.body;
+        const updatedUniversity = await University.findByIdAndUpdate(
+            id,
+            { long_name, short_name, location, country },
+            { new: true, runValidators: true }
+        );
+        if (!updatedUniversity) {
+            return res.status(404).json({ message: 'University not found' });
+        }
+        res.status(200).json({ message: 'University updated successfully', university: updatedUniversity });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating university', error });
     }
 };
 
@@ -135,7 +154,7 @@ const getUniversities = async (req, res) => {
 //Get UserByUniversity
 const getUsersByUniversity = async (req, res) => {
     try {
-        const universityId = req.params.universityId; // Extract universityId from URL parameter
+        const universityId = req.params.universityId; 
         const users = await User.find({ university: universityId });
         res.json({ users });
     } catch (error) {
@@ -173,9 +192,6 @@ const getCourses = async (req, res) => {
     }
 };
 
-
-
-// Bulk Upload Users
  
 
 // Configure nodemailer
@@ -217,16 +233,14 @@ const bulkUploadUsers = async (req, res) => {
         const users = [];
         const existingUsers = [];
         for (const row of data) {
-            const { regd_no, name, mailid, stream, year, password } = row;
+            const { regd_no, name, mailid,section, stream, year,dept, password } = row;
 
-            // Check if the user already exists
             const existingUser = await User.findOne({ regd_no });
             if (existingUser) {
                 existingUsers.push(regd_no);
-                continue; // Skip this user
+                continue; 
             }
 
-            // Hash the password with a salt of 10 rounds
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -235,8 +249,10 @@ const bulkUploadUsers = async (req, res) => {
                 regd_no,
                 name,
                 email: mailid,
+                section,
                 stream,
                 year,
+                dept,
                 university: university._id,
                 password: hashedPassword
             });
@@ -273,6 +289,63 @@ const bulkUploadUsers = async (req, res) => {
     }
 };
 
+//Single Unser
+const createUser = async (req, res) => {
+    try {
+        const { regd_no, name, mailid, section, stream, year, dept, password, universityId } = req.body;
+
+        if (!regd_no || !name || !mailid || !section || !stream || !year || !dept || !password || !universityId) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const existingUser = await User.findOne({ regd_no });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        const university = await University.findById(universityId);
+        if (!university) {
+            return res.status(400).json({ message: 'University not found' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = new User({
+            regd_no,
+            name,
+            email: mailid,
+            section,
+            stream,
+            year,
+            dept,
+            university: university._id,
+            password: hashedPassword
+        });
+
+        await newUser.save();
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: mailid,
+            subject: 'Welcome to SmartLMS',
+            text: `Hello ${name},\n\nWelcome to SmartLMS!\n\nYou have been successfully registered. Here are your login details:\n\nEmail: ${mailid}\nPassword: ${password}\n\nPlease log in to your account and change your password as soon as possible.\n\nBest regards,\nSmartLMS Team`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error(`Error sending email to ${mailid}:`, error);
+            } else {
+                console.log(`Email sent to ${mailid}:`, info.response);
+            }
+        });
+
+        res.status(201).json({ message: 'User created successfully', user: newUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error creating user', error });
+    }
+};
 
 
 const getUniversityById = async (req, res) => {
@@ -326,7 +399,7 @@ const getUserById = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const { regd_no, name, email, stream, year, password } = req.body;
+        const { regd_no, name, email,section, stream, year,dept, password } = req.body;
         let hashedPassword = password;
         if (password) {
             const salt = await bcrypt.genSalt(10);
@@ -335,15 +408,140 @@ const updateUser = async (req, res) => {
 
         const user = await User.findByIdAndUpdate(
             userId,
-            { regd_no, name, email, stream, year, password: hashedPassword },
+            { regd_no, name, email,section, stream, year,dept, password: hashedPassword },
             { new: true, runValidators: true }
         );
         if (!user) {
-            return res.status(404).json({ error: 'Admin not found' });
+            return res.status(404).json({ error: 'User not found' });
         }
         res.json({ message: 'User updated successfully', user });
     } catch (error) {
         res.status(500).json({ message: 'Error updating user', error });
+    }
+};
+
+const downloadUsersExcel = async (req, res) => {
+    try {
+        const { universityId } = req.query;
+
+        if (!universityId) {
+            return res.status(400).json({ message: 'University ID is required' });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(universityId)) {
+            return res.status(400).json({ message: 'Invalid University ID' });
+        }
+
+        const users = await User.find({ university: universityId }).lean();
+
+        const data = users.map(user => ({
+            regd_no: user.regd_no,
+            name: user.name,
+            email: user.email,
+            section: user.section,
+            stream: user.stream,
+            year: user.year,
+            dept: user.dept
+        }));
+
+        const worksheet = xlsx.utils.json_to_sheet(data);
+        const workbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(workbook, worksheet, 'Users');
+
+        const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Disposition', 'attachment; filename="users.xlsx"');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buffer);
+    } catch (error) {
+        res.status(500).json({ message: 'Error downloading users', error });
+    }
+};
+
+
+// Create SPOC
+const createSpoc = async (req, res) => {
+    try {
+        const { name, email, phone, universityId } = req.body;
+
+        if (!name || !email || !phone || !universityId) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const password = Math.random().toString(36).slice(-8);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newSpoc = new Spoc({
+            name,
+            email,
+            phone,
+            university: universityId,
+            password: hashedPassword
+        });
+
+        await newSpoc.save();
+
+        // Send email to the new SPOC
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Welcome to SmartLMS',
+            text: `Hello ${name},\n\nWelcome to SmartLMS!\n\nYou have been successfully registered as a SPOC. Here are your login details:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease log in to your account and change your password as soon as possible.\n\nBest regards,\nSmartLMS Team`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error(`Error sending email to ${email}:`, error);
+            } else {
+                console.log(`Email sent to ${email}:`, info.response);
+            }
+        });
+
+        res.status(201).json({ message: 'SPOC created successfully', spoc: newSpoc });
+    } catch (error) {
+        console.error('Error creating SPOC:', error);
+        res.status(500).json({ message: 'Error creating SPOC', error: error.message });
+    }
+};
+
+// Edit SPOC
+const editSpoc = async (req, res) => {
+    try {
+        const spocId = req.params.spocId;
+        const { name, email, phone, universityId } = req.body;
+
+        const spoc = await Spoc.findByIdAndUpdate(
+            spocId,
+            { name, email, phone, university: universityId },
+            { new: true, runValidators: true }
+        );
+
+        if (!spoc) {
+            return res.status(404).json({ message: 'SPOC not found' });
+        }
+
+        res.json({ message: 'SPOC updated successfully', spoc });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating SPOC', error });
+    }
+};
+
+
+// Delete SPOC
+const deleteSpoc = async (req, res) => {
+    try {
+        const spocId = req.params.spocId;
+
+        const spoc = await Spoc.findByIdAndDelete(spocId);
+
+        if (!spoc) {
+            return res.status(404).json({ message: 'SPOC not found' });
+        }
+
+        res.json({ message: 'SPOC deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting SPOC', error });
     }
 };
 
@@ -352,15 +550,21 @@ module.exports = {
     adminLogin, 
     getAlladmins, 
     getadminById, 
-    createUniversity, 
+    createUniversity,
+    editUniversity, 
     createCourse, 
     getUniversities, 
     getCourses, 
     bulkUploadUsers,
+    createUser,
     getUsersByUniversity,
     getUniversityById, 
     updateUniversity, 
     getUserById, 
-    updateUser 
+    updateUser,
+    downloadUsersExcel,
+    createSpoc,
+    editSpoc,
+    deleteSpoc
 };
 
