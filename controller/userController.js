@@ -37,36 +37,59 @@ const userRegister = async(req, res) => {
 }
 
 const userLogin = async (req, res) => {
-    const { email, password } = req.body;
     try {
+        const { email, password } = req.body;
+        const errorMsg = 'Auth failed: email or password is wrong';
+
+        if (!email || !password) {
+            return res.status(400).json({ success: false, message: 'Email and password are required' });
+        }
+
         const userEmail = await user.findOne({ email });
         if (!userEmail) {
-            console.log("user not found for email:", email); // Log if user not found
-            return res.status(401).json({ error: "Invalid username or password" });
+            console.log("User not found for email:", email); // Log if user not found
+            return res.status(403).json({ success: false, message: errorMsg });
         }
 
-        console.log("user found:", userEmail);
-
-        if (!password || !userEmail.password) {
-            console.log("Password missing:", { password, userPassword: userEmail.password }); // Log if passwords are missing
-            return res.status(401).json({ error: "Invalid username or password" });
-        }
+        console.log("User found:", userEmail);
 
         const isMatch = await bcrypt.compare(password, userEmail.password);
         if (!isMatch) {
-            console.log("Password mismatch"); 
-            return res.status(401).json({ error: "Invalid username or password" });
+            console.log("Password mismatch");
+            return res.status(403).json({ success: false, message: errorMsg });
         }
 
-        const token = jwt.sign({ userId: userEmail._id }, undefined, { algorithm: 'none' });
+        const token = jwt.sign(
+            { userId: userEmail._id },
+            process.env.JWT_SECRET,
+            { algorithm: 'HS256', expiresIn: '5h' }
+        );
 
-        const userId = userEmail._id;
+        // Start session
+        req.session.user = {
+            id: userEmail._id,
+            email: userEmail.email,
+            name: userEmail.name
+        };
 
-        res.status(200).json({ success: "Login successful", token, userId });
+        // Send session ID as a cookie
+        res.cookie('sessionId', req.sessionID, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production'
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            token,
+            userId: userEmail._id,
+            email: userEmail.email,
+            name: userEmail.name
+        });
         console.log(email, "this is token", token);
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "Internal server error" });
+        console.error('Error during login:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
 

@@ -40,37 +40,53 @@ const facultyRegister = async (req, res) => {
 };
 
 const facultyLogin = async (req, res) => {
-    const { email, password } = req.body;
     try {
+        const { email, password } = req.body;
         const facultyEmail = await faculty.findOne({ email });
+        const errorMsg = 'Auth failed: email or password is wrong';
+
         if (!facultyEmail) {
-            console.log("Faculty not found for email:", email); // Log if faculty not found
-            return res.status(401).json({ error: "Invalid username or password" });
+            return res.status(403).json({ message: errorMsg, success: false });
         }
 
-        console.log("Faculty found:", facultyEmail);
-
-        if (!password || !facultyEmail.password) {
-            console.log("Password missing:", { password, facultyPassword: facultyEmail.password }); // Log if passwords are missing
-            return res.status(401).json({ error: "Invalid username or password" });
+        const isPassEqual = await bcrypt.compare(password, facultyEmail.password);
+        if (!isPassEqual) {
+            return res.status(403).json({ message: errorMsg, success: false });
         }
 
-        const isMatch = await bcrypt.compare(password, facultyEmail.password);
-        if (!isMatch) {
-            console.log("Password mismatch"); 
-            return res.status(401).json({ error: "Invalid username or password" });
-        }
+        const jwtToken = jwt.sign(
+            { facultyId: facultyEmail._id },
+            process.env.JWT_SECRET,
+            { algorithm: 'HS256', expiresIn: '5h' }
+        );
 
-        // Generate a token without a secret key (not recommended for production)
-        const token = jwt.sign({ facultyId: facultyEmail._id }, undefined, { algorithm: 'none' });
+        // Start session
+        req.session.user = {
+            id: facultyEmail._id,
+            email: facultyEmail.email,
+            name: facultyEmail.name
+        };
 
-        const facultyId = facultyEmail._id;
+        // Send session ID as a cookie
+        res.cookie('sessionId', req.sessionID, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production'
+        });
 
-        res.status(200).json({ success: "Login successful", token, facultyId });
-        console.log(email, "this is token", token);
+        res.status(200).json({
+            message: "Login Success",
+            success: true,
+            jwtToken,
+            facultyId: facultyEmail._id,
+            email: facultyEmail.email,
+            name: facultyEmail.name
+        });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "Internal server error" });
+        console.error('Error during login:', error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 };
 

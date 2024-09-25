@@ -11,6 +11,7 @@ const Faculty = require('../models/faculty');
 const loginSpoc = async (req, res) => {
     try {
         const { email, password } = req.body;
+        const errorMsg = 'Auth failed: email or password is wrong';
 
         if (!email || !password) {
             return res.status(400).json({ success: false, message: 'Email and password are required' });
@@ -18,18 +19,18 @@ const loginSpoc = async (req, res) => {
 
         const spoc = await Spoc.findOne({ email });
         if (!spoc) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password' });
+            return res.status(403).json({ success: false, message: errorMsg });
         }
 
         const isMatch = await bcrypt.compare(password, spoc.password);
         if (!isMatch) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password' });
+            return res.status(403).json({ success: false, message: errorMsg });
         }
 
         const token = jwt.sign(
             { id: spoc._id, email: spoc.email },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { algorithm: 'HS256', expiresIn: '5h' }
         );
 
         // Start session
@@ -41,7 +42,13 @@ const loginSpoc = async (req, res) => {
             university: spoc.university
         };
 
-        res.json({
+        // Send session ID as a cookie
+        res.cookie('sessionId', req.sessionID, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production'
+        });
+
+        res.status(200).json({
             success: true,
             message: 'Login successful',
             token,
