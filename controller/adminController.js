@@ -12,7 +12,6 @@ require('dotenv').config();
 
 const secretKey = process.env.JWT_SECRET;
 
-// Configure multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
 // Admin Register
@@ -44,29 +43,25 @@ const adminRegister = async (req, res) => {
 
 //Admin Login
 const adminLogin = async (req, res) => {
-    const { email, password } = req.body;
     try {
+        const { email, password } = req.body;
         const adminEmail = await admin.findOne({ email });
+        const errorMsg = 'Auth failed: email or password is wrong';
+
         if (!adminEmail) {
-            console.log("Admin not found for email:", email); // Log if admin not found
-            return res.status(401).json({ error: "Invalid username or password" });
+            return res.status(403).json({ message: errorMsg, success: false });
         }
 
-        console.log("Admin found:", adminEmail);
-
-        if (!password || !adminEmail.password) {
-            console.log("Password missing:", { password, adminPassword: adminEmail.password }); // Log if passwords are missing
-            return res.status(401).json({ error: "Invalid username or password" });
+        const isPassEqual = await bcrypt.compare(password, adminEmail.password);
+        if (!isPassEqual) {
+            return res.status(403).json({ message: errorMsg, success: false });
         }
 
-        const isMatch = await bcrypt.compare(password, adminEmail.password);
-        if (!isMatch) {
-            console.log("Password mismatch"); 
-            return res.status(401).json({ error: "Invalid username or password" });
-        }
-
-        const token = jwt.sign(
-            { adminId: adminEmail._id }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+        const jwtToken = jwt.sign(
+            { adminId: adminEmail._id },
+            process.env.JWT_SECRET,
+            { algorithm: 'HS256', expiresIn: '5h' }
+        );
 
         // Start session
         req.session.user = {
@@ -78,16 +73,26 @@ const adminLogin = async (req, res) => {
         // Send session ID as a cookie
         res.cookie('sessionId', req.sessionID, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production' 
+            secure: process.env.NODE_ENV === 'production'
         });
 
-        res.status(200).json({ success: "Login successful", token, adminId: adminEmail._id });
-        console.log(email, "this is token", token);
+        res.status(200).json({
+            message: "Login Success",
+            success: true,
+            jwtToken,
+            adminId: adminEmail._id,
+            email: adminEmail.email,
+            name: adminEmail.name
+        });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "Internal server error" });
+        console.error('Error during login:', error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 };
+
 
 // Get All Admins
 const getAlladmins = async (req, res) => {
@@ -626,9 +631,10 @@ const deleteSpoc = async (req, res) => {
 const adminLogout = (req, res) => {
     req.session.destroy((err) => {
         if (err) {
+            console.error('Error destroying session:', err);
             return res.status(500).json({ message: 'Error logging out', error: err });
         }
-        res.clearCookie('token');
+        res.clearCookie('token', { path: '/' });
         res.status(200).json({ message: 'Logout successful' });
     });
 };

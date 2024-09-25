@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controller/adminController');
-const authenticate = require('../middleware/authenticate');
+// const authenticate = require('../middleware/authenticate');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
 // Public route
 router.post('/login', adminController.adminLogin);
+router.get('/logout', adminController.adminLogout);
 
 //middleware
-router.use(authenticate);
+// z
 
 // Protected routes
 router.post('/upload-users', upload.single('file'), adminController.bulkUploadUsers);
@@ -41,6 +42,6 @@ router.get('/users/count', adminController.getTotalUsers);
 router.get('/spocs/count', adminController.getTotalSpocs);
 router.get('/courses/count', adminController.getTotalCourses);
 
-router.get('/logout', adminController.adminLogout);
+
 
 module.exports = router;

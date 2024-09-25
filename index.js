@@ -20,23 +20,36 @@ const app = express();
 
 const PORT = process.env.PORT || 4000;
 
+// Configure CORS
+const corsOptions = {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true 
+};
+
+app.use(cors(corsOptions));
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'ysumanthYaava',
+    secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
-    cookie: { secure: false } 
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 5 // 5 hours
+    }
 }));
 
-app.use(bodyParser.json());
 
+app.use(bodyParser.json());
 
 app.use('/faculty', facultyRoutes);
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/spoc', spocRoutes);
 
-app.listen(PORT, () => {
-    console.log(`server started and running at ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server started and running at ${PORT}`);
 });
