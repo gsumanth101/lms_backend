@@ -50,6 +50,12 @@ app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/spoc', spocRoutes);
 
+
+app.get('/', (req, res) => {
+    res.return('Welcome to the server');
+
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server started and running at ${PORT}`);
 });
