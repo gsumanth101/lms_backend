@@ -1,41 +1,43 @@
 const faculty = require('../models/faculty');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const dotEnv = require('dotenv');
-
-const db = require('../lib/config');
 
 
 
 
 
-const facultyRegister = async(req, res) => {
-    const { fname,lname, email,mobile_num, password } = req.body;
+
+const facultyRegister = async (req, res) => {
+    const { name, email, section, password } = req.body;
     try {
-        const facultyEmail = await faculty.findOne({ email });
+        // Check if session exists
+
+        // Retrieve the university ID from the session
+        const universityId = req.session.user.university;
+
+        const facultyEmail = await Faculty.findOne({ email });
         if (facultyEmail) {
             return res.status(400).json("Email already taken");
         }
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newfaculty = new faculty({
-            fname,
-            lname,
+        const newFaculty = new Faculty({
+            name,
             email,
-            mobile_num,
-            password: hashedPassword
+            section,
+            password: hashedPassword,
+            university: universityId
         });
-        await newfaculty.save();
+        await newFaculty.save();
 
-        res.status(201).json({ message: "faculty registered successfully" });
-        console.log('registered')
+        res.status(201).json({ message: "Faculty registered successfully" });
+        console.log('registered');
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Internal server error" })
+        res.status(500).json({ error: "Internal server error" });
     }
-
-}
+};
 
 const facultyLogin = async (req, res) => {
     const { email, password } = req.body;

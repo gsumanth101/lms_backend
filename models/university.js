@@ -8,7 +8,6 @@ const universitySchema = new mongoose.Schema({
     short_name:{
         type: String,
         required: true,
-        unique: true
     },
     location: {
         type: String,

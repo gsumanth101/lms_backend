@@ -16,7 +16,7 @@ const SpocSchema = new mongoose.Schema({
     },
     university: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'University',
+        ref: 'university',
         required: true
     },
     password: {

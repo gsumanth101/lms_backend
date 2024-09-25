@@ -1,7 +1,12 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const facultySchema = new mongoose.Schema({
-    name: {
+const facultySchema = new Schema({
+    fname: {
+        type: String,
+        required: true
+    },
+    lname: {
         type: String,
         required: true
     },
@@ -14,12 +19,13 @@ const facultySchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // firm: [{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Firm'
-    // }]
+    university: {
+        type: Schema.Types.ObjectId,
+        ref: 'University',
+        required: true
+    }
 });
 
-const faculty = mongoose.model('faculty', facultySchema);
+const Faculty = mongoose.model('Faculty', facultySchema);
 
-module.exports = faculty;
+module.exports = Faculty;

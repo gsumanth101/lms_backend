@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const Spoc = require('../models/spoc'); 
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const User = require('../models/user'); // Ensure User model is imported
+const Faculty = require('../models/faculty');
 
 
 // Login SPOC
@@ -11,39 +13,47 @@ const loginSpoc = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+            return res.status(400).json({ success: false, message: 'Email and password are required' });
         }
 
         const spoc = await Spoc.findOne({ email });
         if (!spoc) {
-            return res.status(400).json({ message: 'Invalid email or password' });
+            return res.status(400).json({ success: false, message: 'Invalid email or password' });
         }
+
         const isMatch = await bcrypt.compare(password, spoc.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid email or password' });
+            return res.status(400).json({ success: false, message: 'Invalid email or password' });
         }
+
         const token = jwt.sign(
             { id: spoc._id, email: spoc.email },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
+        // Start session
+        req.session.user = {
+            id: spoc._id,
+            name: spoc.name,
+            email: spoc.email,
+            phone: spoc.phone,
+            university: spoc.university
+        };
+
         res.json({
+            success: true,
             message: 'Login successful',
             token,
-            spoc: {
-                id: spoc._id,
-                name: spoc.name,
-                email: spoc.email,
-                phone: spoc.phone,
-                university: spoc.university
-            }
+            spoc: req.session.user
         });
     } catch (error) {
         console.error('Error logging in SPOC:', error);
-        res.status(500).json({ message: 'Error logging in SPOC', error: error.message });
+        res.status(500).json({ success: false, message: 'Error logging in SPOC', error: error.message });
     }
 };
+
+
 
 // Get SPOC Details
 const getSpocDetails = async (req, res) => {
@@ -156,9 +166,105 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const getCounts = async (req, res) => {
+    try {
+
+        const universityId = req.session.user.university;
+
+        const studentCount = await User.countDocuments({ university: universityId });
+        const facultyCount = await Faculty.countDocuments({ university: universityId });
+
+        res.json({
+            studentCount,
+            facultyCount
+        });
+    } catch (error) {
+        console.error('Error retrieving counts:', error);
+        res.status(500).json({ message: 'Error retrieving counts', error: error.message });
+    }
+};
+
+
+
+
+
+const createFaculty = async (req, res) => {
+    try {
+        const { name, email, section, password } = req.body;
+
+        // Check if session exists
+        if (!req.session.user || !req.session.user.university) {
+            return res.status(401).json({ message: 'Unauthorized: No session available' });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create a new faculty member
+        const newFaculty = new Faculty({
+            name,
+            email,
+            section,
+            password: hashedPassword
+        });
+
+        // Save the faculty member to the database
+        await newFaculty.save();
+
+        // Send email after successful registration
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Faculty Registration Successful',
+            text: `Hello ${name},\n\nYour registration as a faculty member has been successful.\n\nBest regards,\nYour Team`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error('Error sending email:', error);
+            } else {
+                console.log('Email sent:', info.response);
+            }
+        });
+
+        res.status(201).json({ message: 'Faculty member created successfully', faculty: newFaculty });
+    } catch (error) {
+        console.error('Error creating faculty member:', error);
+        res.status(500).json({ message: 'Error creating faculty member', error: error.message });
+    }
+};
+
+// Export functions
+
+
+const getStudents = async (req, res) => {
+    try {
+        // Check if session exists
+        if (!req.session.user || !req.session.user.university) {
+            return res.status(401).json({ message: 'Unauthorized: No session available' });
+        }
+
+        // Retrieve the university ID from the session
+        const universityId = req.session.user.university;
+
+        // Retrieve the list of students in the university
+        const students = await User.find({ university: universityId });
+
+        res.json({
+            students
+        });
+    } catch (error) {
+        console.error('Error retrieving students:', error);
+        res.status(500).json({ message: 'Error retrieving students', error: error.message });
+    }
+};
+
 module.exports = {
     loginSpoc,
     getSpocDetails,
-    forgotPassword,
-    resetPassword
+    getCounts,
+    getStudents,
+    createFaculty,
+    resetPassword,
+    forgotPassword
 };

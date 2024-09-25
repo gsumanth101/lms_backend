@@ -35,7 +35,7 @@ const userSchema = new Schema({
     },
     university: {
         type: Schema.Types.ObjectId,
-        ref: 'University',
+        ref: 'university',
         required: true
     },
     password: {
