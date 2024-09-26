@@ -17,7 +17,7 @@ const userSchema = new Schema({
         required: true,
         unique: true
     },
-    section:{
+    section: {
         type: String,
         required: true
     },
@@ -29,7 +29,7 @@ const userSchema = new Schema({
         type: Number,
         required: true
     },
-    dept:{
+    dept: {
         type: String,
         required: true
     },

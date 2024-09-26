@@ -487,7 +487,6 @@ const downloadUsersExcel = async (req, res) => {
 };
 
 
-
 const getTotalUniversities = async (req, res) => {
     try {
         const count = await University.countDocuments();
@@ -498,13 +497,16 @@ const getTotalUniversities = async (req, res) => {
     }
 };
 
+
 const getTotalUsers = async (req, res) => {
     try {
-        const count = await user.countDocuments();
-        res.json({ message: 'Total users retrieved successfully', count });
-    } catch (error) {
-        console.error('Error retrieving total users:', error);
-        res.status(500).json({ message: 'Error retrieving total users', error: error.message });
+        const count = await User.countDocuments({});
+        res.status(200).json({ count: Number(count) });
+    } catch (err) {
+        res.status(500).json({
+            message: 'Error fetching user count',
+            error: err
+        });
     }
 };
 

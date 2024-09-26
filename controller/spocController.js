@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const User = require('../models/user'); // Ensure User model is imported
 const Faculty = require('../models/faculty');
+const Course = require('../models/course');
 
 
 // Login SPOC
@@ -60,7 +61,53 @@ const loginSpoc = async (req, res) => {
     }
 };
 
+const getStudentCount = async (req, res) => {
+    try {
+        if (!req.session.user || !req.session.user.university) {
+            return res.status(401).json({ message: 'Unauthorized: No session available' });
+        }
 
+        const universityId = req.session.user.university;
+        const studentCount = await Student.countDocuments({ university: universityId });
+
+        res.status(200).json({ studentCount: Number(studentCount) });
+    } catch (error) {
+        console.error('Error fetching student count:', error);
+        res.status(500).json({ message: 'Error fetching student count', error: error.message });
+    }
+};
+
+const getFacultyCount = async (req, res) => {
+    try {
+        if (!req.session.user || !req.session.user.university) {
+            return res.status(401).json({ message: 'Unauthorized: No session available' });
+        }
+
+        const universityId = req.session.user.university;
+        const facultyCount = await Faculty.countDocuments({ university: universityId });
+
+        res.status(200).json({ facultyCount: Number(facultyCount) });
+    } catch (error) {
+        console.error('Error fetching faculty count:', error);
+        res.status(500).json({ message: 'Error fetching faculty count', error: error.message });
+    }
+};
+
+const getCourseCount = async (req, res) => {
+    try {
+        if (!req.session.user || !req.session.user.university) {
+            return res.status(401).json({ message: 'Unauthorized: No session available' });
+        }
+
+        const universityId = req.session.user.university;
+        const courseCount = await Course.countDocuments({ university: universityId });
+
+        res.status(200).json({ courseCount: Number(courseCount) });
+    } catch (error) {
+        console.error('Error fetching course count:', error);
+        res.status(500).json({ message: 'Error fetching course count', error: error.message });
+    }
+};
 
 // Get SPOC Details
 const getSpocDetails = async (req, res) => {
@@ -173,23 +220,7 @@ const resetPassword = async (req, res) => {
     }
 };
 
-const getCounts = async (req, res) => {
-    try {
 
-        const universityId = req.session.user.university;
-
-        const studentCount = await User.countDocuments({ university: universityId });
-        const facultyCount = await Faculty.countDocuments({ university: universityId });
-
-        res.json({
-            studentCount,
-            facultyCount
-        });
-    } catch (error) {
-        console.error('Error retrieving counts:', error);
-        res.status(500).json({ message: 'Error retrieving counts', error: error.message });
-    }
-};
 
 
 
@@ -269,9 +300,11 @@ const getStudents = async (req, res) => {
 module.exports = {
     loginSpoc,
     getSpocDetails,
-    getCounts,
     getStudents,
     createFaculty,
+    getStudentCount,
+    getFacultyCount,
+    getCourseCount,
     resetPassword,
     forgotPassword
 };
