@@ -52,7 +52,7 @@ app.use('/spoc', spocRoutes);
 
 
 app.get('/', (req, res) => {
-    res.send('Hey its working');
+    res.send('Hey its working ..');
 
 });
 
