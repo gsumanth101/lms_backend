@@ -6,6 +6,7 @@ const facultyRoutes = require('./routes/facultyRouter');
 const userRoutes = require('./routes/userRouter');
 const adminRoutes = require('./routes/adminRouter');
 const spocRoutes = require('./routes/spocRouter');
+const assessmentRoutes = require('./routes/assessmentRouter'); // Add this line
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
@@ -49,7 +50,7 @@ app.use('/faculty', facultyRoutes);
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/spoc', spocRoutes);
-
+app.use('/assessments', assessmentRoutes); 
 
 app.get('/', (req, res) => {
     res.send('Hey its working ..');
