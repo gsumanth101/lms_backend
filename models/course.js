@@ -12,6 +12,27 @@ const courseSchema = new mongoose.Schema({
     universities: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'university'
+    }],
+    content: [{
+        unitNumber: {
+            type: Number,
+            required: true
+        },
+        unitTitle: {
+            type: String,
+            required: true
+        },
+        unitDescription: {
+            type: String,
+            required: true
+        },
+        materials: [{
+            type: String
+        }]
+    }],
+    streams: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'stream'
     }]
 });
 

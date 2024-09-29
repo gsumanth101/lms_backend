@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 4000;
 
 // Configure CORS
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true 
@@ -38,7 +38,7 @@ app.use(session({
     cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60 * 5 // 5 hours
+        maxAge: 1000 * 60 * 60 * 5 
     }
 }));
 

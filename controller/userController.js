@@ -45,31 +45,31 @@ const userLogin = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Email and password are required' });
         }
 
-        const userEmail = await user.findOne({ email });
-        if (!userEmail) {
+        const user = await UserModel.findOne({ email });
+        if (!user) {
             console.log("User not found for email:", email); // Log if user not found
             return res.status(403).json({ success: false, message: errorMsg });
         }
 
-        console.log("User found:", userEmail);
+        console.log("User found:", user);
 
-        const isMatch = await bcrypt.compare(password, userEmail.password);
-        if (!isMatch) {
+        const isPassEqual = await bcrypt.compare(password, user.password);
+        if (!isPassEqual) {
             console.log("Password mismatch");
             return res.status(403).json({ success: false, message: errorMsg });
         }
 
-        const token = jwt.sign(
-            { userId: userEmail._id },
+        const jwtToken = jwt.sign(
+            { email: user.email, _id: user._id },
             process.env.JWT_SECRET,
-            { algorithm: 'HS256', expiresIn: '5h' }
+            { algorithm: 'HS256', expiresIn: '24h' }
         );
 
         // Start session
         req.session.user = {
-            id: userEmail._id,
-            email: userEmail.email,
-            name: userEmail.name
+            id: user._id,
+            email: user.email,
+            name: user.name
         };
 
         // Send session ID as a cookie
@@ -81,28 +81,20 @@ const userLogin = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Login successful',
-            token,
-            userId: userEmail._id,
-            email: userEmail.email,
-            name: userEmail.name
+            jwtToken,
+            userId: user._id,
+            email: user.email,
+            name: user.name
         });
-        console.log(email, "this is token", token);
-    } catch (error) {
-        console.error('Error during login:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        console.log(email, "this is token", jwtToken);
+    } catch (err) {
+        console.error('Error during login:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
 };
-
-
-const getAllusers = async(req, res) => {
-    try {
-        const users = await user.find().populate('firm');
-        res.json({ users })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}
 
 
 const getuserById = async(req, res) => {
@@ -123,4 +115,4 @@ const getuserById = async(req, res) => {
 }
 
 
-module.exports = { userRegister, userLogin, getAllusers, getuserById }
+module.exports = { userRegister, userLogin, getuserById }

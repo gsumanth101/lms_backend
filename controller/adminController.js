@@ -193,15 +193,9 @@ const getUsersByUniversity = async (req, res) => {
 // Create Course
 const createCourse = async (req, res) => {
     try {
-        const { name, description, universityIds } = req.body;
-        const newCourse = new Course({ name, description, universities: universityIds });
+        const { name, description} = req.body;
+        const newCourse = new Course({ name, description});
         await newCourse.save();
-
-        // Update each university to include this course
-        await University.updateMany(
-            { _id: { $in: universityIds } },
-            { $push: { courses: newCourse._id } }
-        );
 
         res.status(201).json({ message: 'Course created successfully', course: newCourse });
     } catch (error) {
@@ -220,8 +214,25 @@ const getCourses = async (req, res) => {
     }
 };
 
- 
+const getCourseById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const course = await Course.findById(id)
+            .populate('name')
+            .select('name description content streams');
 
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        res.status(200).json({ course });
+    } catch (error) {
+        console.error('Error fetching course:', error);
+        res.status(500).json({ message: 'Error fetching course', error: error.message });
+    }
+};
+
+ 
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
     service: 'gmail', 
@@ -629,6 +640,34 @@ const deleteSpoc = async (req, res) => {
     }
 };
 
+const addUnitToCourse = async (req, res) => {
+    const { unitTitle, unitDescription } = req.body;
+    const pdfFile = req.file ? req.file.path : null;
+
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        const newUnit = {
+            unitNumber: course.content.length + 1, 
+            unitTitle,
+            unitDescription,
+            materials: pdfFile ? [pdfFile] : []
+        };
+
+        course.content.push(newUnit);
+
+        await course.save();
+
+        res.status(200).json(course);
+    } catch (error) {
+        console.error('Error adding unit:', error);
+        res.status(500).json({ message: 'Error adding unit', error: error.message });
+    }
+};
+
 //logout
 const adminLogout = (req, res) => {
     req.session.destroy((err) => {
@@ -668,6 +707,8 @@ module.exports = {
     getTotalUsers,
     getTotalSpocs,
     getTotalCourses,
-    adminLogout
+    adminLogout,
+    getCourseById,
+    addUnitToCourse,
 };
 
