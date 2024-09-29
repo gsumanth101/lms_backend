@@ -120,7 +120,7 @@ router.get('/:id/details', async (req, res) => {
     const completedStudents = submissions.map(sub => ({
       studentId: sub.studentId,
       score: sub.score,
-      submittedAt: sub.submittedAt
+      submittedAt: sub.createdAt.toISOString() // Use createdAt as the submission time
     }));
     const pendingStudents = totalStudents - completedStudents.length;
 
