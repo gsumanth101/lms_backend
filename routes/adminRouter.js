@@ -23,7 +23,7 @@ router.post('/add_course', adminController.createCourse);
 router.get('/org', adminController.getUniversities);
 router.get('/courses', adminController.getCourses);
 router.get('/courses/:id', adminController.getCourseById);
-router.post('/courses/:id/add-unit', upload.single('pdfFile'), adminController.addUnitWithPdf);
+router.post('/courses/:id/add-unit', upload.single('pdfFile'), adminController.addUnitToCourse);
 router.get('/user/:adminId', adminController.getadminById);
 router.get('/users/:universityId', adminController.getUsersByUniversity);
 router.get('/org/:universityId', adminController.getUniversityById);
