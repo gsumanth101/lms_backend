@@ -2,12 +2,21 @@ const Admin = require('../models/admin');
 const University = require('../models/university');
 const Student = require('../models/student');
 const Course = require('../models/course');
+const Spoc = require('../models/spoc');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const xlsx = require('xlsx');
 dotenv.config();
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 const adminRegister = async (req, res) => {
     const { name, email, password } = req.body;
@@ -135,16 +144,6 @@ const editUniversity = async (req, res) => {
     }
 };
 
-// const getUniversities = async (req, res) => {
-//     try {
-//         const universities = await University.find().populate('courses');
-//         res.json({ universities });
-//     } catch (error) {
-//         console.error('Error fetching universities:', error);
-//         res.status(500).json({ message: 'Error fetching universities', error: error.message });
-//     }
-// };
-
 const getStudentsByUniversity = async (req, res) => {
     try {
         const universityId = req.params.universityId; 
@@ -157,8 +156,8 @@ const getStudentsByUniversity = async (req, res) => {
 
 const createCourse = async (req, res) => {
     try {
-        const { name, description} = req.body;
-        const newCourse = new Course({ name, description});
+        const { name, description } = req.body;
+        const newCourse = new Course({ name, description });
         await newCourse.save();
 
         res.status(201).json({ message: 'Course created successfully', course: newCourse });
@@ -167,7 +166,6 @@ const createCourse = async (req, res) => {
     }
 };
 
-//All Universities
 async function getUniversities(req, res) {
     try {
         const universities = await University.find();
@@ -177,7 +175,6 @@ async function getUniversities(req, res) {
         res.status(500).json({ error: "Internal server error" });
     }
 }
-
 
 const getCourses = async (req, res) => {
     try {
@@ -394,20 +391,116 @@ const updateStudent = async (req, res) => {
     }
 };
 
+const createSpoc = async (req, res) => {
+    try {
+        const { name, email, phone, universityId } = req.body;
+
+        if (!name || !email || !phone || !universityId) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const password = Math.random().toString(36).slice(-8);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newSpoc = new Spoc({
+            name,
+            email,
+            phone,
+            university: universityId,
+            password: hashedPassword
+        });
+
+        await newSpoc.save();
+
+        // Send email to the new SPOC
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Welcome to SmartLMS',
+            text: `Hello ${name},\n\nWelcome to SmartLMS!\n\nYou have been successfully registered as a SPOC. Here are your login details:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease log in to your account and change your password as soon as possible.\n\nBest regards,\nSmartLMS Team`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error(`Error sending email to ${email}:`, error);
+            } else {
+                console.log(`Email sent to ${email}:`, info.response);
+            }
+        });
+
+        res.status(201).json({ message: 'SPOC created successfully', spoc: newSpoc });
+    } catch (error) {
+        console.error('Error creating SPOC:', error);
+        res.status(500).json({ message: 'Error creating SPOC', error: error.message });
+    }
+};
+
+const getAllSpocs = async (req, res) => {
+    try {
+        const spocs = await Spoc.find().populate('university');
+        res.json({ spocs });
+    } catch (error) {
+        console.error('Error retrieving SPOCs:', error);
+        res.status(500).json({ message: 'Error retrieving SPOCs', error: error.message });
+    }
+};
+
+const editSpoc = async (req, res) => {
+    try {
+        const spocId = req.params.spocId;
+        const { name, email, phone, universityId } = req.body;
+
+        const spoc = await Spoc.findByIdAndUpdate(
+            spocId,
+            { name, email, phone, university: universityId },
+            { new: true, runValidators: true }
+        );
+
+        if (!spoc) {
+            return res.status(404).json({ message: 'SPOC not found' });
+        }
+
+        res.json({ message: 'SPOC updated successfully', spoc });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating SPOC', error });
+    }
+};
+
+const deleteSpoc = async (req, res) => {
+    try {
+        const spocId = req.params.spocId;
+
+        const spoc = await Spoc.findByIdAndDelete(spocId);
+
+        if (!spoc) {
+            return res.status(404).json({ message: 'SPOC not found' });
+        }
+
+        res.json({ message: 'SPOC deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting SPOC', error });
+    }
+};
+
 module.exports = { 
-    adminRegister,
-    adminLogin,
-    getAdminProfile,
-    createUniversity,
-    editUniversity, //
+    adminRegister, ///
+    adminLogin, ///
+    getAdminProfile, ///
+    createUniversity, ///
+    editUniversity,
     getUniversities, ///
     getStudentsByUniversity,
     createCourse, ///
-    getCourses,
-    bulkUploadStudents,
-    createStudent,
+    getCourses, 
+    bulkUploadStudents, ///
+    createStudent, ///
     getUniversityById,
     updateUniversity,
     getStudentById,
-    updateStudent
+    updateStudent,
+    createSpoc, ///
+    getAllSpocs,
+    editSpoc,
+    deleteSpoc
 };

@@ -19,7 +19,8 @@ app.use(express.json());
 
 app.use(cors(
     {
-        origin: 'https://api.phemesoft.com',
+        // origin: 'https://api.phemesoft.com',
+        origin: 'http://localhost:5173',
         methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'HEAD','DELETE', 'PATCH', 'UPDATE'],
         credentials: true
     }
