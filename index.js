@@ -20,8 +20,8 @@ app.use(express.json());
 
 app.use(cors(
     {
-        // origin: 'https://admin.smartlms.tech',
-        origin: 'http://localhost:5173',
+        origin: 'https://admin.smartlms.tech',
+        // origin: 'http://localhost:5173',
         methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'HEAD','DELETE', 'PATCH', 'UPDATE'],
         credentials: true
     }
