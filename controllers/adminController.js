@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
+const path = require('path');
 const xlsx = require('xlsx');
 dotenv.config();
 
@@ -64,36 +65,31 @@ const adminLogin = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ msg: 'Please enter all fields' });
+        return res.status(400).render('admin/login', { errorMessage: 'Please enter all fields' });
     }
 
     try {
         let admin = await Admin.findOne({ email });
         if (!admin) {
-            return res.status(400).json({ msg: 'Invalid Credentials' });
+            return res.status(400).render('admin/login', { errorMessage: 'Invalid Credentials' });
         }
 
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) {
-            return res.status(400).json({ msg: 'Invalid Credentials' });
+            return res.status(400).render('admin/login', { errorMessage: 'Invalid Credentials' });
         }
 
-        const payload = {
-            admin: {
-                id: admin.id,
-            },
-        };
-        const token = jwt.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: '1h',
-        });
+        req.session.admin = admin;
 
-        res.status(200).json({ email, token });
+        // Display admin details after successful login
+        res.render('admin/dashboard', { admin });
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).send('Server Error');
+        res.status(500).render('admin/login', { errorMessage: 'Server Error' });
     }
-}
+};
+
 
 const getAdminProfile = async (req, res) => {
     try {
@@ -555,6 +551,32 @@ const getFacultyCount = async (req, res) => {
 }
 
 
+
+const renderDashboard = async (req, res) => {
+    try {
+        const universityCount = await University.countDocuments();
+        const courseCount = await Course.countDocuments();
+        const studentCount = await Student.countDocuments();
+        const spocCount = await Spoc.countDocuments();
+        const facultyCount = await Faculty.countDocuments();
+
+        res.render('admin/dashboard', {
+            admin: req.session.admin,
+            universityCount: universityCount,
+            courseCount: courseCount,
+            studentCount: studentCount,
+            spocCount: spocCount,
+            facultyCount: facultyCount
+        });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).render('admin/dashboard', { errorMessage: 'Server Error' });
+    }
+};
+
+
+
+
 module.exports = { 
     adminRegister, ///
     adminLogin, ///
@@ -580,5 +602,7 @@ module.exports = {
     getSpocCount,
     getStudentCount,
     getCourseCount,
-    getFacultyCount
+    getFacultyCount,
+
+    renderDashboard
 };
