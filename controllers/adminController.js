@@ -3,6 +3,7 @@ const University = require('../models/university');
 const Student = require('../models/student');
 const Course = require('../models/course');
 const Spoc = require('../models/spoc');
+const Faculty = require('../models/faculty');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
@@ -438,7 +439,7 @@ const createSpoc = async (req, res) => {
 
 const getAllSpocs = async (req, res) => {
     try {
-        const spocs = await Spoc.find().populate('university');
+        const spocs = await Spoc.find();
         res.json({ spocs });
     } catch (error) {
         console.error('Error retrieving SPOCs:', error);
@@ -483,6 +484,77 @@ const deleteSpoc = async (req, res) => {
     }
 };
 
+const updateAdminPassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const admin = await Admin.findById(req.admin.id);
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, admin.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid old password' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        admin.password = hashedPassword;
+        await admin.save();
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating password', error });
+    }
+}
+
+const getUniversityCount = async (req, res) => {
+    try {
+        const count = await University.countDocuments();
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching university count', error });
+    }
+}
+
+const getSpocCount = async (req, res) => {
+    try {
+        const count = await Spoc.countDocuments();
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching SPOC count', error });
+    }
+}
+
+const getStudentCount = async (req, res) => {
+    try {
+        const count = await Student.countDocuments();
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching student count', error });
+    }
+}
+
+const getCourseCount = async (req, res) => {
+    try {
+        const count = await Course.countDocuments();
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching course count', error });
+    }
+}
+
+const getFacultyCount = async (req, res) => {
+    try {
+        const count = await Faculty.countDocuments();
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching faculty count', error });
+    }
+}
+
+
 module.exports = { 
     adminRegister, ///
     adminLogin, ///
@@ -500,7 +572,13 @@ module.exports = {
     getStudentById,
     updateStudent,
     createSpoc, ///
-    getAllSpocs,
+    getAllSpocs, ///
     editSpoc,
-    deleteSpoc
+    deleteSpoc,
+    updateAdminPassword,
+    getUniversityCount,
+    getSpocCount,
+    getStudentCount,
+    getCourseCount,
+    getFacultyCount
 };

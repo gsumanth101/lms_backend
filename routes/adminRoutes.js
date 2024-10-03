@@ -15,6 +15,16 @@ router.post('/add_course', protect, Admin.createCourse);
 router.post('/upload-users', protect, Admin.bulkUploadStudents);
 router.post('/create-student', protect, Admin.createStudent);
 router.post('/create-spoc', protect, Admin.createSpoc);
+router.post('/update_password', protect, Admin.updateAdminPassword);
+
+router.get('/university_count', Admin.getUniversityCount);
+router.get('/course_count', Admin.getCourseCount);
+router.get('/student_count', Admin.getStudentCount);
+router.get('/spoc_count', Admin.getSpocCount);
+router.get('/faculty_count', Admin.getFacultyCount);
+
+router.get('/spocs', Admin.getAllSpocs);
+
 
 
 module.exports = router;
