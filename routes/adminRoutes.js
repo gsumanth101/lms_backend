@@ -25,17 +25,15 @@ router.get('/spoc_count', Admin.getSpocCount);
 router.get('/faculty_count', Admin.getFacultyCount);
 
 router.get('/spocs', Admin.getAllSpocs);
-
+router.get('/profile',protect,Admin.getAdminProfile);
 
 // router.get('/dashboard', Admin.getDashboardData);
 
 
-router.get('/login', (req, res) => {
-    res.render('admin/login');
-});
+
 
 // router.use(protect);
-router.get('/dashboard', protect, Admin.renderDashboard);
+
 
 
 

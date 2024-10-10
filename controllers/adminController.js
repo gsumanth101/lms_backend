@@ -65,41 +65,57 @@ const adminLogin = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).render('admin/login', { errorMessage: 'Please enter all fields' });
+        return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
     try {
         let admin = await Admin.findOne({ email });
         if (!admin) {
-            return res.status(400).render('admin/login', { errorMessage: 'Invalid Credentials' });
+            return res.status(400).json({ msg: 'Invalid Credentials' });
         }
 
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) {
-            return res.status(400).render('admin/login', { errorMessage: 'Invalid Credentials' });
+            return res.status(400).json({ msg: 'Invalid Credentials' });
         }
 
-        req.session.admin = admin;
+        const payload = {
+            admin: {
+                id: admin.id,
+            },
+        };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: '1h',
+        });
 
-        // Display admin details after successful login
-        res.render('admin/dashboard', { admin });
+        res.status(200).json({ email, token });
 
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).render('admin/login', { errorMessage: 'Server Error' });
-    }
-};
-
-
-const getAdminProfile = async (req, res) => {
-    try {
-        const admin = await Admin.findById(req.admin.id).select('-password');
-        res.json(admin);
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
     }
 }
+
+
+const getAdminProfile = async (req, res) => {
+    try {
+        const adminId = req.admin && req.admin.id;
+        if (!adminId) {
+            return res.status(400).json({ message: 'Admin ID not found in request' });
+        }
+
+        const admin = await Admin.findById(adminId).select('-password');
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+
+        res.json(admin);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+};
+
 
 const createUniversity = async (req, res) => {
     try {
