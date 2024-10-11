@@ -20,7 +20,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Configure CORS
 app.use(cors({
-    origin: 'http://localhost:3000', // Replace with your frontend's origin
+    origin: '*', // Replace with your frontend's origin
     credentials: true // Allow credentials (cookies, authorization headers, etc.)
 }));
 

@@ -9,9 +9,20 @@ const courseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    universities: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'University'
+    universityDetails: [{
+        university: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'University',
+            required: true
+        },
+        year: {
+            type: Number,
+            required: true
+        },
+        stream: {
+            type: String,
+            required: true
+        }
     }]
 });
 

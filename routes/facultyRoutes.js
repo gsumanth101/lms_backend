@@ -11,5 +11,6 @@ router.get('/profile', protect, Faculty.getFacultyProfile);
 // router.post('/forgot_password', Faculty.facultyForgotPassword);
 // // router.post('/reset_password', Faculty.facultyResetPassword);
 // router.post('/upload_faculty', protect, Faculty.);
+router.get('/courses', protect, Faculty.getMyCourses);   
 
 module.exports = router;

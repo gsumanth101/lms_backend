@@ -50,8 +50,29 @@ const getFacultyProfile = async (req, res) => {
     }
 }
 
+const getMyCourses = async (req, res) => {
+    try {
+        const faculty = await Faculty.findById(req.faculty.id).select('university stream year');
+        if (!faculty) {
+            return res.status(404).json({ message: 'Faculty not found' });
+        }
+
+        const courses = await Course.find({
+            'universityDetails.university': faculty.university,
+            'universityDetails.stream': faculty.stream,
+            'universityDetails.year': faculty.year
+        });
+
+        res.json(courses);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+};
+
 module.exports = { 
     facultyLogin, 
-    getFacultyProfile 
+    getFacultyProfile,
+    getMyCourses
 };
 

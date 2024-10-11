@@ -128,6 +128,28 @@ const createFaculty = async (req, res) => {
 };
 
 
+const uploadFaculty = async (req, res) => {
+    try {
+        const { name, email, ph_number, year, section, stream } = req.body;
+        const university = req.spoc.university; // Get the university from the logged-in SPOC
+
+        const newFaculty = new Faculty({
+            name,
+            email,
+            ph_number,
+            year,
+            section,
+            stream,
+            university // Set the university field
+        });
+
+        await newFaculty.save();
+        res.status(201).json({ message: 'Faculty uploaded successfully' });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+};
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -233,6 +255,7 @@ module.exports = {
     getSpocProfile,
     createFaculty,
     bulkUploadFaculty,
-    getFacultyByUniversity
+    getFacultyByUniversity,
+    uploadFaculty
 };
 

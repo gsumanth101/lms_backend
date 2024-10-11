@@ -8,5 +8,7 @@ router.post('/login', Spoc.adminLogin);
 router.get('/profile', protect, Spoc.getSpocProfile);
 router.post('/create_faculty', protect, Spoc.createFaculty);
 router.get('/faculty', protect, Spoc.getFacultyByUniversity);
+router.post('/upload_faculty',protect,Spoc.uploadFaculty);
+
 
 module.exports = router;
