@@ -10,6 +10,11 @@ const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const xlsx = require('xlsx');
+const multer = require('multer');
+const xml2js = require('xml2js');
+const fs = require('fs');
+const unzipper = require('unzipper');
+const mongoose = require('mongoose');
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -198,6 +203,151 @@ const getCourses = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+const getCourseById = async (req, res) => {
+    const { id } = req.params;
+    try {
+      const course = await Course.findById(id)
+        .populate('name')
+        .select('name description content streams');
+  
+      if (!course) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+  
+      res.status(200).json({ course });
+    } catch (error) {
+      console.error('Error fetching course:', error);
+      res.status(500).json({ message: 'Error fetching course', error: error.message });
+    }
+};
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/scorm/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+
+const upload = multer({ storage: storage });
+
+const addUnitToCourse = async (req, res) => {
+    const { id } = req.params; // Course ID
+    const { unitName } = req.body; // Unit name
+    const scormFile = req.file; // SCORM package file
+
+    if (!unitName || !scormFile) {
+        return res.status(400).json({ message: 'Unit name and SCORM package file are required' });
+    }
+
+    try {
+        const course = await Course.findById(id);
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Extract the SCORM package
+        const scormDir = path.join(__dirname, '../uploads', `${Date.now()}-${scormFile.originalname}`);
+        await fs.promises.mkdir(scormDir, { recursive: true });
+
+        await new Promise((resolve, reject) => {
+            fs.createReadStream(scormFile.path)
+                .pipe(unzipper.Extract({ path: scormDir }))
+                .on('close', resolve)
+                .on('error', reject);
+        });
+
+        // Verify that the index.html file exists
+        const indexPath = path.join(scormDir, 'index.html');
+        if (!fs.existsSync(indexPath)) {
+            throw new Error(`index.html file not found at ${indexPath}`);
+        }
+
+        const newUnit = {
+            unitTitle: unitName,
+            materials: [{ scormDir, indexPath: `uploads/${path.basename(scormDir)}/index.html` }],
+        };
+
+        course.content.push(newUnit);
+        await course.save();
+
+        res.status(200).json({ message: 'Unit added successfully with SCORM content', indexPath: newUnit.materials[0].indexPath });
+    } catch (error) {
+        console.error('Error handling SCORM package:', error);
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
+
+// Assign a course to a university
+const assignCourseToUniversity = async (req, res) => {
+    const { id } = req.params; // Course ID
+    const { universityId } = req.body; // University ID
+
+    try {
+        // Find the course by ID
+        const course = await Course.findById(id);
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Find the university by ID
+        const university = await University.findById(universityId);
+        if (!university) {
+            return res.status(404).json({ message: 'University not found' });
+        }
+
+        // Add the university to the course's universities array if not already present
+        if (!course.universities.includes(universityId)) {
+            course.universities.push(universityId);
+        }
+
+        // Add the course to the university's courses array if not already present
+        if (!university.courses.includes(id)) {
+            university.courses.push(id);
+        }
+
+        // Save both documents
+        await course.save();
+        await university.save();
+
+        res.status(200).json({ message: 'Course assigned to university successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
+
+const viewUnit = async (req, res) => {
+    const { courseId, unitId } = req.params;
+  
+    try {
+      const course = await Course.findById(courseId);
+      if (!course) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+  
+      const unit = course.content.id(unitId);
+      if (!unit) {
+        return res.status(404).json({ message: 'Unit not found' });
+      }
+  
+      const material = unit.materials[0]; // Assuming there's only one material per unit
+      if (!material) {
+        return res.status(404).json({ message: 'Material not found' });
+      }
+  
+      const filePath = path.join(__dirname, '../uploads', material.indexPath);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+  
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Error viewing unit:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  };
 
 const bulkUploadStudents = async (req, res) => {
     try {
@@ -603,6 +753,9 @@ module.exports = {
     getStudentsByUniversity,
     createCourse, ///
     getCourses, 
+    getCourseById,
+    addUnitToCourse,
+    assignCourseToUniversity,
     bulkUploadStudents, ///
     createStudent, ///
     getUniversityById,
@@ -619,6 +772,6 @@ module.exports = {
     getStudentCount,
     getCourseCount,
     getFacultyCount,
-
+    viewUnit,
     renderDashboard
 };
