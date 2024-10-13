@@ -6,9 +6,11 @@ const protect = require('../middleware/spocAuthMiddleware');
 router.post('/login', Spoc.adminLogin);
 
 router.get('/profile', protect, Spoc.getSpocProfile);
-router.post('/create_faculty', protect, Spoc.createFaculty);
+router.post('/create_faculty',  Spoc.createFaculty);
 router.get('/faculty', protect, Spoc.getFacultyByUniversity);
 router.post('/upload_faculty',protect,Spoc.uploadFaculty);
+
+router.get('/student_count', Spoc.getStudentCountByUniversity);
 
 
 module.exports = router;

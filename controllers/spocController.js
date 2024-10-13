@@ -250,12 +250,31 @@ const getFacultyByUniversity = async (req, res) => {
     }
 }
 
+const getStudentCountByUniversity = async (req, res) => {
+    try {
+        const universityId = req.spoc.university;
+        if (!universityId) {
+            res.status(400).json({ message: 'University ID is required' });
+            return;
+        }
+
+        const studentCount = await Student.countDocuments({ university: universityId });
+        res.json({ count: studentCount });
+    } catch (error) {
+        console.error('Error fetching student count:', error.message);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+  
+
+
 module.exports = {
     adminLogin,
     getSpocProfile,
     createFaculty,
     bulkUploadFaculty,
     getFacultyByUniversity,
-    uploadFaculty
+    uploadFaculty,
+    getStudentCountByUniversity
 };
 
