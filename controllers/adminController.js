@@ -10,13 +10,13 @@ const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const xlsx = require('xlsx');
-const XLSX = require('xlsx');
 const multer = require('multer');
 const xml2js = require('xml2js');
 const fs = require('fs');
 const unzipper = require('unzipper');
 const mongoose = require('mongoose');
 dotenv.config();
+const XLSX = require('xlsx');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
