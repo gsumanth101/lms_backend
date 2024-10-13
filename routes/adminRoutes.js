@@ -12,8 +12,14 @@ const upload = multer({ dest: 'uploads/' });
 router.post('/register', Admin.adminRegister);
 router.post('/login', Admin.adminLogin);
 
+router.get('/export_students',Admin.exportStudentsToExcel);
+router.get('/export_faculty', Admin.exportFacultyToExcel);
+
+// Route to export SPOCs to Excel
+router.get('/export_spocs', Admin.exportSpocToExcel);
+
 router.get('/profile', protect, Admin.getAdminProfile);
-router.post('/add_org', protect, Admin.createUniversity);
+router.post('/add_org', Admin.createUniversity);
 router.get('/org', Admin.getUniversities);
 router.get('/org_students', Admin.getStudentsByUniversity);
 

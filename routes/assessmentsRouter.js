@@ -11,7 +11,7 @@ router.get('/manage', async (req, res) => {
     const assessments = await Assessment.find().select('-questions.correctAnswer');
     const assessmentsWithStats = await Promise.all(assessments.map(async (assessment) => {
       const submissions = await Submission.find({ assessmentId: assessment._id });
-      const totalStudents = 70; // Replace with actual total students count
+      const totalStudents = 2; // Replace with actual total students count
       const completedCount = submissions.length;
       const pendingCount = totalStudents - completedCount;
       const averageScore = completedCount > 0 

@@ -5,7 +5,7 @@ const router = express.Router();
 const Student = require('../models/student'); // Import the Student model
 const Meeting = require('../models/meeting'); // Import the Meeting model
 
-const DAILY_API_KEY = 'a409edc2f3ae05bfed2b2e7238ef6f217b9f7f2a83456b09230828899a2fdc0b'; // Daily.co API key
+const DAILY_API_KEY = '6f2a4a94436d1834971a1a0e0c12e862f92c08d147ba1f48b82e8e84492881d7'; // Daily.co API key
 
 // Email transporter setup
 const transporter = nodemailer.createTransport({
@@ -16,8 +16,9 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+
 router.post('/create-meeting', async (req, res) => {
-    const { section, meetingTitle, facultyId, facultyName } = req.body; // Added faculty info
+    const { meetingTitle, section, facultyId, facultyName } = req.body; // Added faculty info
     
     console.log('Request Body:', req.body); // Log the incoming request body
   
@@ -75,6 +76,8 @@ router.post('/create-meeting', async (req, res) => {
         res.status(500).json({ error: 'Failed to create a meeting', details: error.response ? error.response.data : error.message });
     }
 });
+
+
 
 
 // Route to fetch meetings for a particular faculty based on facultyId
