@@ -77,9 +77,27 @@ const getCourseById = async (req, res) => {
     }
 };
 
+const getStudentCourses = async (req, res) => {
+    try {
+        // Find the student by ID
+        const student = await Student.findById(req.student.id);
+        if (!student) {
+            return res.status(404).json({ msg: 'Student not found' });
+        }
+
+        // Find courses by university ID
+        const courses = await Course.find({ university: student.university });
+        res.status(200).json({ courses });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+};
+
 module.exports = { 
     studentLogin, 
     getStudentProfile,
     getCourses,
+    getStudentCourses,
     getCourseById
 };
