@@ -10,7 +10,6 @@ const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const xlsx = require('xlsx');
-const XLSX = require('xlsx');
 const multer = require('multer');
 const xml2js = require('xml2js');
 const fs = require('fs');
