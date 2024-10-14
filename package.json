@@ -23,22 +23,15 @@
     "express-session": "^1.18.0",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
-<<<<<<< HEAD
-    "mongoose": "^8.7.0",
-=======
     "mongoose": "^8.7.1",
->>>>>>> a85f6bcc26985e4a88f4497842a6885ab0737518
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.15",
     "unzipper": "^0.12.3",
     "xlsx": "^0.18.5",
     "xml2js": "^0.6.2"
-<<<<<<< HEAD
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^7.0.0"
-=======
->>>>>>> a85f6bcc26985e4a88f4497842a6885ab0737518
   }
 }

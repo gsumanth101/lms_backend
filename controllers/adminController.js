@@ -16,6 +16,7 @@ const fs = require('fs');
 const unzipper = require('unzipper');
 const mongoose = require('mongoose');
 dotenv.config();
+const XLSX = require('xlsx');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
